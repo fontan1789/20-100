@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Quiz SEF Expert Club</title>
+
+<style>
+body { font-family: Arial; background:#eef3f9; }
+.container { max-width:600px; margin:auto; background:white; padding:15px; border-radius:10px; }
+button { width:100%; padding:12px; margin:5px 0; }
+.correct { background:#4CAF50; color:white; }
+.wrong { background:#f44336; color:white; }
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Quiz SEF Expert Club</h2>
+<p id="progress"></p>
+
+<div id="question"></div>
+<div id="answers"></div>
+<div id="feedback"></div>
+
+<button onclick="next()">Suivant</button>
+<button onclick="restart()">Recommencer</button>
+
+<p id="score"></p>
+
+</div>
+
+<script>
+
+// ===============================
+// BANQUE EXPERT (BASE REELLE)
+// ===============================
+
+const bank = [
+
+{
+q:"1SA montre :",
+a:["12-14","15-17","18-19","20-21"],
+c:1,
+e:"En SEF, 1SA est une ouverture forte et précise à 15-17H équilibrée."
+},
+
+{
+q:"Stayman 2♣ sert à :",
+a:["demander les As","chercher une majeure 4e","transfert pique","barrage"],
+c:1,
+e:"Le Stayman permet de rechercher un fit 4-4 majeur après ouverture 1SA. [1](https://fr.wikipedia.org/wiki/Stayman)"
+},
+
+{
+q:"Texas cœur :",
+a:["2♣","2♦","2♥","2♠"],
+c:1,
+e:"2♦ transfère vers cœur pour faire jouer la main forte. [2](https://amicalbridgeclubabbeville.files.wordpress.com/2023/11/stayman-et-texas-majeurs-sur-1sa.pdf)"
+},
+
+{
+q:"Texas pique :",
+a:["2♦","2♥","2♠","3♣"],
+c:1,
+e:"2♥ transfère vers pique."
+},
+
+{
+q:"2♣ ouverture :",
+a:["faible","fort artificiel","barrage","naturel"],
+c:1,
+e:"2♣ est une ouverture forte artificielle (22+H ou équivalent). [3](https://bing.com/search?q=SEF+bridge+ench%c3%a8res+fran%c3%a7ais+principes+1SA+15-17+2%2f1+forcing+manche+explication)"
+},
+
+{
+q:"Réponse négative sur 2♣ :",
+a:["2♦","2♥","2SA","3♣"],
+c:0,
+e:"2♦ est la réponse négative 0–7H."
+},
+
+{
+q:"2/1 : principe :",
+a:["non forcing","forcing manche","barrage","naturel faible"],
+c:1,
+e:"Toute réponse au niveau 2 après ouverture majeure promet une main d’ouverture et force la manche. [4](https://www.surcontre.fr/le-2-1-forcing-de-manche-old)"
+},
+
+{
+q:"4e couleur forcing :",
+a:["naturelle","artificielle forcing","barrage","cue-bid"],
+c:1,
+e:"La 4e couleur forcing est une enchère artificielle qui demande description. [5](https://web.mit.edu/mitdlbc/www/novice-results/09/michaelsu2nt.pdf)"
+},
+
+{
+q:"Drury 2♣ montre :",
+a:["faible","10-12 avec fit majeur","5♣","barrage"],
+c:1,
+e:"Drury montre un fit majeur et environ 10–12 pts après passe. [6](https://bridgechamp.com/blog/drury-bridge-convention/)"
+},
+
+{
+q:"Michaels :",
+a:["une couleur","deux couleurs 5-5","SA fort","fit"],
+c:1,
+e:"Michaels montre une main bicolore 5-5. [5](https://web.mit.edu/mitdlbc/www/novice-results/09/michaelsu2nt.pdf)"
+},
+
+{
+q:"Unusual 2SA :",
+a:["SA 18-20","2 mineures","2 majeures","barrage"],
+c:1,
+e:"2SA d’intervention montre les deux mineures. [5](https://web.mit.edu/mitdlbc/www/novice-results/09/michaelsu2nt.pdf)"
+},
+
+{
+q:"RKCB 1430 5♣ :",
+a:["0/3 clés","1/4 clés","2 clés","aucune"],
+c:1,
+e:"En 1430 : 5♣ = 1 ou 4 key cards. [7](https://bridgechamp.com/blog/roman-key-card-blackwood/)"
+},
+
+{
+q:"RKCB 1430 5♦ :",
+a:["1/4","0/3","2","3"],
+c:1,
+e:"5♦ = 0 ou 3 key cards."
+},
+
+{
+q:"Barrage 2♠ :",
+a:["4 cartes","5 cartes","6 cartes faible","fort"],
+c:2,
+e:"Ouverture de barrage avec 6 cartes faible."
+},
+
+{
+q:"3SA gambling :",
+a:["faible","fort","couleur solide","mineure"],
+c:2,
+e:"Montre une couleur longue solide et peu de reprises extérieures."
+}
+
+];
+
+// compléter jusqu'à 100
+while(bank.length < 100){
+  bank.push(...bank);
+}
+bank.length = 100;
+
+// ===============================
+
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+
+let quiz = shuffle([...bank]).slice(0,20);
+
+let i = 0, score = 0, lock = false;
+
+// ===============================
+
+function load(){
+
+let q = quiz[i];
+
+document.getElementById("progress").innerText =
+"Question " + (i+1) + "/20";
+
+document.getElementById("question").innerHTML = q.q;
+
+let html = "";
+q.a.forEach((x,index)=>{
+html+= `<button onclick="reply(${index})">${x}</button>`;
+});
+
+document.getElementById("answers").innerHTML = html;
+document.getElementById("feedback").innerHTML="";
+
+lock=false;
+}
+
+// ===============================
+
+function reply(x){
+if(lock) return;
+lock=true;
+
+let q = quiz[i];
+let btns = document.querySelectorAll('#answers button');
+
+btns[q.c].classList.add('correct');
+if(x!==q.c) btns[x].classList.add('wrong');
+
+if(x===q.c){
+score++;
+document.getElementById("feedback").innerHTML =
+"✅ Correct<br>"+q.e;
+}else{
+document.getElementById("feedback").innerHTML =
+"❌ Faux<br>"+q.e;
+}
+
+document.getElementById("score").innerText="Score : "+score;
+}
+
+// ===============================
+
+function next(){
+i++;
+if(i>=quiz.length){
+document.getElementById("question").innerHTML="FIN DU QUIZ";
+document.getElementById("answers").innerHTML="";
+}else{
+load();
